@@ -25,16 +25,26 @@ def validate(text):
     return True
 
 
-def main():
-    validate(ENTRY)
-    out_dir = os.environ.get("ENTRY_OUTPUT_DIR", "/output")
+def write_entry(text, out_dir):
+    """Write one validated line to entry.txt, world-readable for the grader.
+
+    Returns the path written. Plain open() + explicit chmod 644: the
+    grader runs as a different user, so the file must be world-readable
+    (never tempfile.mkstemp, which forces mode 0600).
+    """
+    validate(text)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "entry.txt")
-    # Plain open() + explicit chmod 644: the grader runs as a different
-    # user, so the file must be world-readable (never tempfile.mkstemp).
     with open(path, "w", encoding="utf-8") as f:
-        f.write(ENTRY)
+        f.write(text)
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    return path
+
+
+def main():
+    out_dir = os.environ.get("ENTRY_OUTPUT_DIR", "/output")
+    path = write_entry(ENTRY, out_dir)
+    print(f"wrote {len(ENTRY)}-character entry to {path}")
 
 
 if __name__ == "__main__":
